@@ -5,22 +5,21 @@ using Android.Content.Res;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
+using Android.Support.V4.Content;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using AndroidSegmentedControl;
-using Orientation = Android.Widget.Orientation;
 
-namespace AndroidSegementedControl
+namespace AndroidSegmentedControl
 {
     public class SegmentedGroup : RadioGroup, RadioGroup.IOnCheckedChangeListener
     {
+        private readonly LayoutSelector _layoutSelector;
         private Color _tintColor;
         private Color _unCheckedTintColor;
         private int _marginDp;
         private float _cornerRadius;
         private Color _checkedTextColor;
-        private LayoutSelector _layoutSelector;
         private IDictionary<int, TransitionDrawable> _drawableMap;
         private int _lastCheckId;
         private IOnCheckedChangeListener _checkedChangeListener;
@@ -28,54 +27,59 @@ namespace AndroidSegementedControl
         public SegmentedGroup(Context context)
             : base(context)
         {
-            _tintColor = Resources.GetColor(Resource.Color.radio_button_selected_color, Theme);
-            _unCheckedTintColor = Resources.GetColor(Resource.Color.radio_button_unselected_color, Theme);
-            _marginDp = (int)Resources.GetDimension(Resource.Dimension.radio_button_stroke_border);
-            _cornerRadius = Resources.GetDimension(Resource.Dimension.radio_button_conner_radius);
             _layoutSelector = new LayoutSelector(this, _cornerRadius);
+            SetDefaultValues();
         }
 
         public SegmentedGroup(Context context, IAttributeSet attrs)
             : base(context, attrs)
         {
-            _tintColor = Resources.GetColor(Resource.Color.radio_button_selected_color, Theme);
-            _unCheckedTintColor = Resources.GetColor(Resource.Color.radio_button_unselected_color, Theme);
-            _marginDp = (int)Resources.GetDimension(Resource.Dimension.radio_button_stroke_border);
-            _cornerRadius = Resources.GetDimension(Resource.Dimension.radio_button_conner_radius);
             _layoutSelector = new LayoutSelector(this, _cornerRadius);
+            SetDefaultValues();
             InitAttrs(attrs);
         }
 
         private Resources.Theme Theme => Context.Theme;
+
+        private Color GetDefaultTintColor() => new Color(ContextCompat.GetColor(Context, Resource.Color.radio_button_selected_color));
+        private Color GetDefaultUnCheckedTintColor() => new Color(ContextCompat.GetColor(Context, Resource.Color.radio_button_unselected_color));
+        private Color GetDefaultCheckedTextColor() => new Color(ContextCompat.GetColor(Context, Android.Resource.Color.White));
+        private int GetDefaultMarginDp() => (int) Resources.GetDimension(Resource.Dimension.radio_button_stroke_border);
+        private float GetDefaultCornerRadius() => Resources.GetDimension(Resource.Dimension.radio_button_conner_radius);
+
+        private void SetDefaultValues()
+        {
+            _tintColor = GetDefaultTintColor();
+            _unCheckedTintColor = GetDefaultUnCheckedTintColor();
+            _marginDp = GetDefaultMarginDp();
+            _cornerRadius = GetDefaultCornerRadius();
+        }
 
         /// <summary>
         /// Reads the attributes from the layout
         /// </summary>
         private void InitAttrs(IAttributeSet attrs)
         {
+            if (attrs == null)
+            {
+                return;
+            }
+
             var typedArray = Theme.ObtainStyledAttributes(attrs, Resource.Styleable.SegmentedGroup, 0, 0);
 
             try
             {
                 _marginDp = (int)typedArray.GetDimension(
                     Resource.Styleable.SegmentedGroup_sc_border_width,
-                    Resources.GetDimension(Resource.Dimension.radio_button_stroke_border));
+                    GetDefaultMarginDp());
 
                 _cornerRadius = typedArray.GetDimension(
                     Resource.Styleable.SegmentedGroup_sc_corner_radius,
-                    Resources.GetDimension(Resource.Dimension.radio_button_conner_radius));
+                    GetDefaultCornerRadius());
 
-                _tintColor = typedArray.GetColor(
-                    Resource.Styleable.SegmentedGroup_sc_tint_color,
-                    Resources.GetColor(Resource.Color.radio_button_selected_color, Theme));
-
-                _checkedTextColor = typedArray.GetColor(
-                    Resource.Styleable.SegmentedGroup_sc_checked_text_color,
-                    Resources.GetColor(Android.Resource.Color.White, Theme));
-
-                _unCheckedTintColor = typedArray.GetColor(
-                    Resource.Styleable.SegmentedGroup_sc_unchecked_tint_color,
-                    Resources.GetColor(Resource.Color.radio_button_unselected_color, Theme));
+                _tintColor = typedArray.GetColor(Resource.Styleable.SegmentedGroup_sc_tint_color, GetDefaultTintColor());
+                _checkedTextColor = typedArray.GetColor(Resource.Styleable.SegmentedGroup_sc_checked_text_color, GetDefaultCheckedTextColor());
+                _unCheckedTintColor = typedArray.GetColor(Resource.Styleable.SegmentedGroup_sc_unchecked_tint_color, GetDefaultUnCheckedTintColor());
             }
             finally
             {
@@ -126,7 +130,7 @@ namespace AndroidSegementedControl
                 var initParams = (LayoutParams)child.LayoutParameters;
                 var layoutParams = new LayoutParams(initParams.Width, initParams.Height, initParams.Weight);
                 // Check orientation for proper margins
-                if (Orientation == Orientation.Horizontal)
+                if (Orientation == Android.Widget.Orientation.Horizontal)
                 {
                     layoutParams.SetMargins(0, 0, -_marginDp, 0);
                 }
@@ -153,8 +157,8 @@ namespace AndroidSegementedControl
             ((Button)view).SetTextColor(colorStateList);
 
             // Redraw with tint color
-            var checkedDrawable = Resources.GetDrawable(checkedLayout, Theme).Mutate() as GradientDrawable;
-            var uncheckedDrawable = Resources.GetDrawable(uncheckedLayout, Theme).Mutate() as GradientDrawable;
+            var checkedDrawable = ContextCompat.GetDrawable(Context, checkedLayout).Mutate() as GradientDrawable;
+            var uncheckedDrawable = ContextCompat.GetDrawable(Context, uncheckedLayout).Mutate() as GradientDrawable;
 
             checkedDrawable?.SetColor(_tintColor);
             checkedDrawable?.SetStroke(_marginDp, _tintColor);
@@ -166,7 +170,7 @@ namespace AndroidSegementedControl
             checkedDrawable?.SetCornerRadii(_layoutSelector.GetChildRadius(view));
             uncheckedDrawable?.SetCornerRadii(_layoutSelector.GetChildRadius(view));
 
-            var maskDrawable = Resources.GetDrawable(uncheckedLayout, Theme).Mutate() as GradientDrawable;
+            var maskDrawable = ContextCompat.GetDrawable(Context, uncheckedLayout).Mutate() as GradientDrawable;
             maskDrawable?.SetStroke(_marginDp, _tintColor);
             maskDrawable?.SetColor(_unCheckedTintColor);
             maskDrawable?.SetCornerRadii(_layoutSelector.GetChildRadius(view));

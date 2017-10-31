@@ -14,7 +14,7 @@ using Android.Widget;
 using AndroidSegmentedControl;
 using Orientation = Android.Widget.Orientation;
 
-namespace AndroidSegementedControl
+namespace AndroidSegmentedControl
 {
     /// <summary>
     /// This class is used to provide the proper layout based on the view.
